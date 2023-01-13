@@ -77,6 +77,16 @@ macro(build_folly)
   if(NOT folly_POPULATED)
     # Fetch the content using previously declared details
     FetchContent_Populate(folly)
+    message("Apply patch for folly ${CMAKE_CURRENT_LIST_DIR}/patches/folly.patch ${folly_SOURCE_DIR}")
+    find_package(Python3)
+    set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
+    execute_process(
+      # COMMAND git apply -v "${CMAKE_CURRENT_LIST_DIR}/patches/folly.patch"
+      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/patch.py ${CMAKE_CURRENT_LIST_DIR}/patches/folly.patch
+      WORKING_DIRECTORY ${folly_SOURCE_DIR}
+      RESULT_VARIABLE rv
+      )
+    message("Apply patch result is ${rv}")
     add_subdirectory(${folly_SOURCE_DIR} ${folly_BINARY_DIR})
     # Avoid possible errors for known warnings
     target_compile_options(folly PUBLIC ${EXTRA_CXX_FLAGS})

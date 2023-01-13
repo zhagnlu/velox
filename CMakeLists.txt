@@ -17,7 +17,7 @@ cmake_minimum_required(VERSION 3.14)
 cmake_policy(SET CMP0077 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
+# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 
 # set the project name
 project(velox)
@@ -316,24 +316,26 @@ resolve_dependency(Boost 1.66.0 COMPONENTS ${BOOST_INCLUDE_LIBRARIES})
 find_package(gflags COMPONENTS shared)
 find_package(glog REQUIRED)
 
-set_source(fmt)
-resolve_dependency(fmt)
+# set_source(fmt)
+# resolve_dependency(fmt)
+find_package(fmt REQUIRED)
 
-find_library(EVENT event)
+# find_library(EVENT event)
+find_package(Libevent REQUIRED)
 
-find_library(DOUBLE_CONVERSION double-conversion)
+find_package(double-conversion REQUIRED)
 
 # Required for boost.
 find_package(ZLIB)
 
 if(NOT ${VELOX_BUILD_MINIMAL})
-  find_library(LZ4 lz4)
-  find_library(LZO lzo2)
-  find_library(ZSTD zstd)
-  find_library(SNAPPY snappy)
+  find_package(lz4 REQUIRED)
+  find_package(lzo REQUIRED)
+  find_package(zstd REQUIRED)
+  find_package(Snappy REQUIRED)
 endif()
 
-find_library(RE2 re2 REQUIRED)
+find_package(re2 REQUIRED)
 
 if(${VELOX_BUILD_PYTHON_PACKAGE})
   set(pybind11_SOURCE AUTO)
@@ -354,11 +356,11 @@ endif()
 set(FOLLY_WITH_DEPENDENCIES
     ${FOLLY_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${DOUBLE_CONVERSION}
-    ${EVENT}
-    ${SNAPPY}
+    ${double-conversion}
+    ${Libevent}
+    ${snappy}
     ${CMAKE_DL_LIBS}
-    ${FMT})
+    ${fmt})
 
 if(DEFINED FOLLY_BENCHMARK_STATIC_LIB)
   set(FOLLY_BENCHMARK ${FOLLY_BENCHMARK_STATIC_LIB})
@@ -448,7 +450,13 @@ include_directories(.)
 
 # TODO: Include all other installation files. For now just making sure this
 # generates an installable makefile.
-install(FILES velox/type/Type.h DESTINATION "include/velox")
+install(DIRECTORY velox/ 
+  DESTINATION "include/velox"
+  FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${CMAKE_BINARY_DIR}/velox/ 
+  DESTINATION "include/velox"
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN "*CMakeFiles*" EXCLUDE)
 
 add_subdirectory(third_party)
 add_subdirectory(velox)
