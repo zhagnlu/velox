@@ -452,7 +452,7 @@ include_directories(.)
 # generates an installable makefile.
 install(DIRECTORY velox/ 
   DESTINATION "include/velox"
-  FILES_MATCHING PATTERN "*.h")
+  FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 install(DIRECTORY ${CMAKE_BINARY_DIR}/velox/ 
   DESTINATION "include/velox"
   FILES_MATCHING PATTERN "*.h"

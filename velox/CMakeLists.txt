@@ -75,25 +75,6 @@ if(${VELOX_ENABLE_SUBSTRAIT})
   add_subdirectory(substrait)
 endif()
 
-# function(get_all_targets var)
-#     set(targets)
-#     get_all_targets_recursive(targets ${CMAKE_CURRENT_SOURCE_DIR})
-#     set(${var} ${targets} PARENT_SCOPE)
-# endfunction()
-#
-# macro(get_all_targets_recursive targets dir)
-#     get_property(subdirectories DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
-#     foreach(subdir ${subdirectories})
-#         get_all_targets_recursive(${targets} ${subdir})
-#     endforeach()
-#
-#     get_property(current_targets DIRECTORY ${dir} PROPERTY BUILDSYSTEM_TARGETS)
-#     list(APPEND ${targets} ${current_targets})
-# endmacro()
-#
-# get_all_targets(all_targets)
-# message("All targets: ${all_targets}")
-
 function(bundle_static_library tgt_name bundled_tgt_name)
   list(APPEND static_libs ${tgt_name})
 
@@ -177,15 +158,15 @@ function(bundle_static_library tgt_name bundled_tgt_name)
     message(FATAL_ERROR "Unknown bundle scenario!")
   endif()
 
-  add_custom_target(bundling_target ALL DEPENDS ${bundled_tgt_full_name})
-  add_dependencies(bundling_target ${tgt_name})
+  add_custom_target(bundling_target_${tgt_name} ALL DEPENDS ${bundled_tgt_full_name})
+  add_dependencies(bundling_target_${tgt_name} ${tgt_name})
 
   add_library(${bundled_tgt_name} STATIC IMPORTED)
   set_target_properties(${bundled_tgt_name} 
     PROPERTIES 
       IMPORTED_LOCATION ${bundled_tgt_full_name}
       INTERFACE_INCLUDE_DIRECTORIES $<TARGET_PROPERTY:${tgt_name},INTERFACE_INCLUDE_DIRECTORIES>)
-  add_dependencies(${bundled_tgt_name} bundling_target)
+  add_dependencies(${bundled_tgt_name} bundling_target_${tgt_name})
 
 endfunction()
 
@@ -198,3 +179,17 @@ target_link_libraries(velox
   velox_hive_connector
   velox_memory)
 bundle_static_library(velox velox_bundled)
+
+if(${VELOX_BUILD_TEST_UTILS}) 
+  add_library(velox_test STATIC examples/ExpressionEval.cpp)
+  target_link_libraries(velox_test
+    velox
+    velox_parse_parser
+    velox_parse_utils
+    velox_duckdb_conversion
+    velox_duckdb_functions
+    velox_duckdb_allocator
+    velox_tpch_connector
+    )
+  bundle_static_library(velox_test velox_test_bundled)
+endif()
