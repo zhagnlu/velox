@@ -316,11 +316,8 @@ resolve_dependency(Boost 1.66.0 COMPONENTS ${BOOST_INCLUDE_LIBRARIES})
 find_package(gflags COMPONENTS shared)
 find_package(glog REQUIRED)
 
-# set_source(fmt)
-# resolve_dependency(fmt)
 find_package(fmt REQUIRED)
 
-# find_library(EVENT event)
 find_package(Libevent REQUIRED)
 
 find_package(double-conversion REQUIRED)
@@ -344,8 +341,10 @@ if(${VELOX_BUILD_PYTHON_PACKAGE})
 endif()
 
 # Locate or build folly.
-set_source(folly)
-resolve_dependency(folly)
+find_package(folly REQUIRED)
+
+find_package(xsimd REQUIRED)
+find_package(GTest REQUIRED)
 
 # If we use BUNDLED boost we need to set this manually AFTER folly is configured
 if(NOT DEFINED Boost_LIBRARIES)
@@ -354,13 +353,14 @@ if(NOT DEFINED Boost_LIBRARIES)
 endif()
 
 set(FOLLY_WITH_DEPENDENCIES
-    ${FOLLY_LIBRARIES}
+    Folly::folly
     ${Boost_LIBRARIES}
-    ${double-conversion}
-    ${Libevent}
-    ${snappy}
-    ${CMAKE_DL_LIBS}
-    ${fmt})
+    double-conversion
+    Libevent
+    snappy
+    fmt
+    GTest::GTest
+    ${CMAKE_DL_LIBS})
 
 if(DEFINED FOLLY_BENCHMARK_STATIC_LIB)
   set(FOLLY_BENCHMARK ${FOLLY_BENCHMARK_STATIC_LIB})
@@ -458,5 +458,4 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/velox/
   FILES_MATCHING PATTERN "*.h"
   PATTERN "*CMakeFiles*" EXCLUDE)
 
-add_subdirectory(third_party)
 add_subdirectory(velox)
