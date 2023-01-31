@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 #include "velox/exec/FilterProject.h"
+#include "velox/buffer/Buffer.h"
 #include "velox/core/Expressions.h"
 #include "velox/expression/Expr.h"
 #include "velox/expression/FieldReference.h"
+#include "velox/type/Type.h"
 
 namespace facebook::velox::exec {
 namespace {
@@ -179,8 +181,38 @@ RowVectorPtr FilterProject::getOutput() {
     project(*rows, evalCtx);
   }
 
-  return fillOutput(
-      numOut, allRowsSelected ? nullptr : filterEvalCtx_.selectedIndices);
+  return std::make_shared<RowVector>(
+      pool(),
+      ROW({"filter_bits"}, {BOOLEAN()}),
+      nullptr,
+      size,
+      std::vector<VectorPtr>{results_[0]});
+
+  // BufferPtr values = AlignedBuffer::allocate<bool>(size, pool());
+  // auto vec = std::make_shared<FlatVector<bool>>(
+  //     pool(),
+  //     BOOLEAN(),
+  //     BufferPtr(nullptr),
+  //     size,
+  //     std::move(values),
+  //     std::vector<BufferPtr>());
+
+  // for (int i = 0; i < rows->size(); ++i) {
+  //   if (rows->isValid(i)) {
+  //     vec->set(i, true);
+  //   } else {
+  //     vec->set(i, false);
+  //   }
+  // }
+  // return std::make_shared<RowVector>(
+  //     pool(),
+  //     ROW({"filter_bits"}, {BOOLEAN()}),
+  //     nullptr,
+  //     size,
+  //     std::vector<VectorPtr>{vec});
+
+  // return fillOutput(
+  //     numOut, allRowsSelected ? nullptr : filterEvalCtx_.selectedIndices);
 }
 
 void FilterProject::project(const SelectivityVector& rows, EvalCtx& evalCtx) {
