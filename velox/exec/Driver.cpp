@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <chrono>
+#include <iostream>
+
 #include <folly/ScopeGuard.h>
 #include <folly/executors/QueuedImmediateExecutor.h>
 #include <folly/executors/task_queue/UnboundedBlockingQueue.h>
@@ -302,6 +305,7 @@ StopReason Driver::runInternal(
     int32_t numOperators = operators_.size();
     ContinueFuture future;
 
+    auto start = std::chrono::steady_clock::now();
     for (;;) {
       for (int32_t i = numOperators - 1; i >= 0; --i) {
         stop = task()->shouldStop();
@@ -311,8 +315,9 @@ StopReason Driver::runInternal(
         }
 
         auto op = operators_[i].get();
-        // In case we are blocked, this index will point to the operator, whose
-        // queuedTime we should update.
+
+        // In case we are blocked, this index will point to the
+        // operator, whose queuedTime we should update.
         curOpIndex_ = i;
         RuntimeStatWriterScopeGuard statsWriterGuard(op);
 

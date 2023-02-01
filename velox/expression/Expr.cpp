@@ -16,7 +16,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <chrono>
 #include <fstream>
+#include <iostream>
 
 #include "velox/common/base/Exceptions.h"
 #include "velox/common/base/Fs.h"
@@ -1434,7 +1436,13 @@ void Expr::applyFunction(
       : std::nullopt;
 
   try {
+    auto start = std::chrono::steady_clock::now();
     vectorFunction_->apply(rows, inputValues_, type(), context, result);
+    std::cout << "Expr::applyFunction cost"
+              << std::chrono::duration_cast<std::chrono::milliseconds>(
+                     std::chrono::steady_clock::now() - start)
+                     .count()
+              << "ms" << std::endl;
   } catch (const VeloxException& ve) {
     throw;
   } catch (const std::exception& e) {

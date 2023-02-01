@@ -16,6 +16,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <chrono>
+#include <iostream>
 #include <string>
 
 #include "velox/codegen/Codegen.h"
@@ -248,6 +250,7 @@ RowVectorPtr Task::next() {
 
   VELOX_CHECK_EQ(state_, kRunning, "Task has already finished processing.");
 
+  auto start = std::chrono::steady_clock::now();
   // On first call, create the drivers.
   if (driverFactories_.empty()) {
     VELOX_CHECK_NULL(
@@ -275,7 +278,10 @@ RowVectorPtr Task::next() {
 
     drivers_ = std::move(drivers);
   }
-
+  auto finish = std::chrono::steady_clock::now();
+  auto duration =
+      std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
+  std::cout << "task next middle cost" << duration.count() << "ms" << std::endl;
   // Run drivers one at a time. If a driver blocks, continue running the other
   // drivers. Running other drivers is expected to unblock some or all blocked
   // drivers.
@@ -304,6 +310,11 @@ RowVectorPtr Task::next() {
       std::shared_ptr<BlockingState> blockingState;
       auto result = drivers_[i]->next(blockingState);
       if (result) {
+        finish = std::chrono::steady_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+            finish - start);
+        std::cout << "task next end cost" << duration.count() << "ms"
+                  << std::endl;
         return result;
       }
 

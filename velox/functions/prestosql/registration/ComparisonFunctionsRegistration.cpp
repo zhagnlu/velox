@@ -32,7 +32,7 @@ void registerComparisonFunctions() {
   VELOX_REGISTER_VECTOR_FUNCTION(udf_simd_comparison_lt, "lt");
 
   registerNonSimdizableScalar<GtFunction, bool>({"gt"});
-  VELOX_REGISTER_VECTOR_FUNCTION(udf_simd_comparison_gt, "gt");
+  // VELOX_REGISTER_VECTOR_FUNCTION(udf_simd_comparison_gt, "gt");
 
   registerNonSimdizableScalar<LteFunction, bool>({"lte"});
   VELOX_REGISTER_VECTOR_FUNCTION(udf_simd_comparison_lte, "lte");

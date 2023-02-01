@@ -177,6 +177,7 @@ target_link_libraries(velox
   velox_exec
   velox_exec_test_lib
   velox_hive_connector
+  velox_functions_spark
   velox_memory)
 bundle_static_library(velox velox_bundled)
 

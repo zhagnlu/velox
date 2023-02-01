@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "velox/exec/FilterProject.h"
+#include <chrono>
+#include <iostream>
 #include "velox/buffer/Buffer.h"
 #include "velox/core/Expressions.h"
 #include "velox/expression/Expr.h"
@@ -130,7 +133,6 @@ RowVectorPtr FilterProject::getOutput() {
   if (allInputProcessed()) {
     return nullptr;
   }
-
   vector_size_t size = input_->size();
   LocalSelectivityVector localRows(*operatorCtx_->execCtx(), size);
   auto* rows = localRows.get();
@@ -164,7 +166,13 @@ RowVectorPtr FilterProject::getOutput() {
   }
 
   // evaluate filter
+  auto start = std::chrono::steady_clock::now();
   auto numOut = filter(evalCtx, *rows);
+  std::cout << "fliter project cost"
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::steady_clock::now() - start)
+                   .count()
+            << "ms" << std::endl;
   numProcessedInputRows_ = size;
   if (numOut == 0) { // no rows passed the filer
     input_ = nullptr;
@@ -223,7 +231,13 @@ void FilterProject::project(const SelectivityVector& rows, EvalCtx& evalCtx) {
 vector_size_t FilterProject::filter(
     EvalCtx& evalCtx,
     const SelectivityVector& allRows) {
+  auto start = std::chrono::steady_clock::now();
   exprs_->eval(0, 1, true, allRows, evalCtx, results_);
+  std::cout << "FilterProject::filter cost"
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::steady_clock::now() - start)
+                   .count()
+            << "ms" << std::endl;
   return processFilterResults(results_[0], allRows, filterEvalCtx_, pool());
 }
 } // namespace facebook::velox::exec

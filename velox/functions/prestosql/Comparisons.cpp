@@ -16,6 +16,8 @@
 
 #include "velox/functions/prestosql/Comparisons.h"
 #include <velox/common/base/Exceptions.h>
+#include <chrono>
+#include <iostream>
 #include "velox/functions/Udf.h"
 #include "velox/vector/BaseVector.h"
 
@@ -48,15 +50,28 @@ struct SimdComparator {
     using d_type = xsimd::batch<T>;
     constexpr auto numScalarElements = d_type::size;
     const auto vectorEnd = (end - begin) - (end - begin) % numScalarElements;
-
     if constexpr (numScalarElements == 2 || numScalarElements == 4) {
+      int count = 0;
       for (auto i = begin; i < vectorEnd; i += 8) {
         rawResult[i / 8] = 0;
         for (auto j = 0; j < 8 && j < vectorEnd; j += numScalarElements) {
+          auto start = std::chrono::steady_clock::now();
           auto left = loadSimdData<T, isLeftConstant>(rawLhs, i + j);
           auto right = loadSimdData<T, isRightConstant>(rawRhs, i + j);
-
-          uint8_t res = simd::toBitMask(ComparisonOp()(left, right));
+          auto ress = ComparisonOp()(left, right);
+          auto middle = std::chrono::steady_clock::now();
+          uint8_t res = simd::toBitMask(ress);
+          auto end = std::chrono::steady_clock::now();
+          std::cout << "SimdComparator::applySimdComparison xxxcost"
+                    << numScalarElements << " " << count++ << " middle: "
+                    << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                           middle - start)
+                           .count()
+                    << " ns, end: "
+                    << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                           end - start)
+                           .count()
+                    << "ns" << std::endl;
           rawResult[i / 8] |= res << j;
         }
       }
@@ -92,6 +107,13 @@ struct SimdComparator {
         bits::setBit(rawResult, i, ComparisonOp()(rawLhs[i], rawRhs[i]));
       }
     }
+
+    // std::cout << "SimdComparator::applySimdComparison xxxcost"
+    //           << "   "
+    //           << std::chrono::duration_cast<std::chrono::nanoseconds>(
+    //                  std::chrono::steady_clock::now() - start)
+    //                  .count()
+    //           << "ns" << std::endl;
   }
 
   template <
@@ -140,10 +162,16 @@ struct SimdComparator {
       applySimdComparison<T, true, false>(
           rows.begin(), rows.end(), &l, rawRhs, rawResult);
     } else if (rhs.isConstantEncoding()) {
+      auto start = std::chrono::steady_clock::now();
       auto rawLhs = lhs.asUnchecked<FlatVector<T>>()->rawValues();
       auto r = rhs.asUnchecked<ConstantVector<T>>()->valueAt(0);
       applySimdComparison<T, false, true>(
           rows.begin(), rows.end(), rawLhs, &r, rawResult);
+      std::cout << "SimdComparator::applyComparison cost"
+                << std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::steady_clock::now() - start)
+                       .count()
+                << "ms" << std::endl;
     } else {
       auto rawLhs = lhs.asUnchecked<FlatVector<T>>()->rawValues();
       auto rawRhs = rhs.asUnchecked<FlatVector<T>>()->rawValues();
@@ -180,6 +208,7 @@ class ComparisonSimdFunction : public exec::VectorFunction {
       const TypePtr& outputType,
       exec::EvalCtx& context,
       VectorPtr& result) const override {
+    auto start = std::chrono::steady_clock::now();
     VELOX_CHECK_EQ(args.size(), 2, "Comparison requires two arguments");
     VELOX_CHECK_EQ(args[0]->typeKind(), args[1]->typeKind());
     VELOX_USER_CHECK_EQ(outputType->kind(), TypeKind::BOOLEAN);
@@ -195,6 +224,11 @@ class ComparisonSimdFunction : public exec::VectorFunction {
         *args[1],
         context,
         result);
+    std::cout << "ComparisonSimdFunction::apply cost"
+              << std::chrono::duration_cast<std::chrono::milliseconds>(
+                     std::chrono::steady_clock::now() - start)
+                     .count()
+              << "ms" << std::endl;
   }
 
   static std::vector<std::shared_ptr<exec::FunctionSignature>> signatures() {

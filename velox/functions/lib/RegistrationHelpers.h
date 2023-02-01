@@ -62,6 +62,7 @@ void registerNonSimdizableScalar(const std::vector<std::string>& aliases) {
   registerFunction<T, TReturn, bool, bool>(aliases);
   registerFunction<T, TReturn, Timestamp, Timestamp>(aliases);
   registerFunction<T, TReturn, Date, Date>(aliases);
+  registerFunction<T, TReturn, double, double>(aliases);
 }
 
 template <template <class> class T>
