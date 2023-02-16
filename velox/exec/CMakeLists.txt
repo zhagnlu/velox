@@ -24,6 +24,7 @@ add_library(
   EnforceSingleRow.cpp
   Exchange.cpp
   FilterProject.cpp
+  FilterBitSet.cpp
   GroupId.cpp
   GroupingSet.cpp
   HashAggregation.cpp

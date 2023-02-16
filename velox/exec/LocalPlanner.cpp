@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <iostream>
+
 #include "velox/exec/LocalPlanner.h"
 #include "velox/core/PlanFragment.h"
 #include "velox/exec/AssignUniqueId.h"
@@ -22,6 +25,7 @@
 #include "velox/exec/EnforceSingleRow.h"
 #include "velox/exec/Exchange.h"
 #include "velox/exec/FilterProject.h"
+#include "velox/exec/FilterBitSet.h"
 #include "velox/exec/GroupId.h"
 #include "velox/exec/HashAggregation.h"
 #include "velox/exec/HashBuild.h"
@@ -290,6 +294,16 @@ std::shared_ptr<Driver> DriverFactory::createDriver(
           operators.push_back(std::make_unique<FilterProject>(
               id, ctx.get(), filterNode, projectNode));
           i++;
+          continue;
+        }
+      }
+      auto sources = filterNode->sources();
+      if (auto tableScanNode =
+              std::dynamic_pointer_cast<const core::TableScanNode>(sources[0])) {
+        if (tableScanNode->tableHandle()->connectorId() ==
+            "segment_connector_id") {
+          operators.push_back(std::make_unique<FilterBitSet>(
+              id, ctx.get(), filterNode, nullptr));
           continue;
         }
       }
