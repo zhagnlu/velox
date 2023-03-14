@@ -448,15 +448,16 @@ include(CTest) # include after project() but before add_subdirectory()
 
 include_directories(.)
 
+add_subdirectory(third_party)
+add_subdirectory(velox)
+
 # TODO: Include all other installation files. For now just making sure this
 # generates an installable makefile.
 install(DIRECTORY velox/ 
   DESTINATION "include/velox"
   FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
-install(DIRECTORY ${CMAKE_BINARY_DIR}/velox/ 
-  DESTINATION "include/velox"
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN "*CMakeFiles*" EXCLUDE)
+#install(DIRECTORY ${CMAKE_BINARY_DIR}/velox/ 
+#  DESTINATION "include/velox"
+#  FILES_MATCHING PATTERN "*.h"
+#  PATTERN "*CMakeFiles*" EXCLUDE)
 
-add_subdirectory(third_party)
-add_subdirectory(velox)
