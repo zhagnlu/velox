@@ -16,6 +16,10 @@
 set(proto_directory ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 set(substrait_proto_directory ${CMAKE_CURRENT_SOURCE_DIR}/proto/substrait)
 set(PROTO_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/proto/")
+
+include(FindProtobuf)
+find_package(Protobuf REQUIRED)
+
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/proto/substrait)
 file(GLOB PROTO_FILES ${substrait_proto_directory}/*.proto
      ${substrait_proto_directory}/extensions/*.proto)

@@ -173,6 +173,7 @@ target_link_libraries(velox
   velox_exec
   velox_exec_test_lib
   velox_hive_connector
+  velox_substrait_plan_converter
   velox_memory)
 bundle_static_library(velox velox_bundled)
 install(FILES "${CMAKE_BINARY_DIR}/libvelox_bundled.a" TYPE LIB COMPONENT "velox_bundled")
