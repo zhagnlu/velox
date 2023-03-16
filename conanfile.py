@@ -150,7 +150,10 @@ class VeloxConan(ConanFile):
             tc.variables["MSVC_LANGUAGE_VERSION"] = cxx_std_value
             tc.variables["MSVC_ENABLE_ALL_WARNINGS"] = False
             tc.variables["MSVC_USE_STATIC_RUNTIME"] = "MT" in msvc_runtime_flag(self)
+        tc.variables["VELOX_BUILD_TEST_UTILS"] = True
+        tc.variables["VELOX_ENABLE_SUBSTRAIT"] = True
         tc.variables["VELOX_BUILD_TESTING"] = False
+        tc.variables["VELOX_FOR_MILVUS"] = True
         tc.generate()
 
         deps = CMakeDeps(self)

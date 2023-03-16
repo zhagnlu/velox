@@ -22,6 +22,7 @@
 #include "velox/exec/EnforceSingleRow.h"
 #include "velox/exec/Exchange.h"
 #include "velox/exec/FilterProject.h"
+#include "velox/exec/FilterBitSet.h"
 #include "velox/exec/GroupId.h"
 #include "velox/exec/HashAggregation.h"
 #include "velox/exec/HashBuild.h"
@@ -293,6 +294,18 @@ std::shared_ptr<Driver> DriverFactory::createDriver(
           continue;
         }
       }
+#ifdef VELOX_FOR_MILVUS
+      auto sources = filterNode->sources();
+      if (auto tableScanNode =
+              std::dynamic_pointer_cast<const core::TableScanNode>(sources[0])) {
+        if (tableScanNode->tableHandle()->connectorId() ==
+            "segment_connector_id") {
+          operators.push_back(std::make_unique<FilterBitSet>(
+              id, ctx.get(), filterNode, nullptr));
+          continue;
+        }
+      }
+#endif
       operators.push_back(
           std::make_unique<FilterProject>(id, ctx.get(), filterNode, nullptr));
     } else if (

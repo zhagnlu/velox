@@ -72,6 +72,11 @@ option(VELOX_ENABLE_ARROW "Enable Arrow support" OFF)
 option(VELOX_BUILD_TEST_UTILS "Builds Velox test utilities" OFF)
 option(VELOX_BUILD_PYTHON_PACKAGE "Builds Velox Python bindings" OFF)
 option(VELOX_BUILD_BENCHMARKS "Builds Velox benchmarks" OFF)
+option(VELOX_FOR_MILVUS "Build velox for milvus" OFF)
+
+if(${VELOX_FOR_MILVUS})
+  add_compile_definitions(VELOX_FOR_MILVUS)
+endif()
 
 if(${VELOX_BUILD_MINIMAL})
   # Enable and disable components for velox base build
